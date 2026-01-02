@@ -1,4 +1,4 @@
-# NitroGen BizHawk Dataset Generator
+# 🎮 NitroGen BizHawk Dataset Generator
 
 [![Lua CI](https://github.com/artryazanov/nitrogen-bizhawk-dataset-generator/actions/workflows/lua-ci.yml/badge.svg)](https://github.com/artryazanov/nitrogen-bizhawk-dataset-generator/actions/workflows/lua-ci.yml)
 [![Python CI](https://github.com/artryazanov/nitrogen-bizhawk-dataset-generator/actions/workflows/python-ci.yml/badge.svg)](https://github.com/artryazanov/nitrogen-bizhawk-dataset-generator/actions/workflows/python-ci.yml)
@@ -6,8 +6,6 @@
 [![License](https://img.shields.io/github/license/artryazanov/nitrogen-bizhawk-dataset-generator)](LICENSE)
 ![Lua](https://img.shields.io/badge/Lua-5.4-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![GitHub last commit](https://img.shields.io/github/last-commit/artryazanov/nitrogen-bizhawk-dataset-generator)
-[![GitHub issues](https://img.shields.io/github/issues/artryazanov/nitrogen-bizhawk-dataset-generator)](https://github.com/artryazanov/nitrogen-bizhawk-dataset-generator/issues)
 
 This project provides tools to create training datasets for [NitroGen](https://huggingface.co/nvidia/NitroGen) using the [BizHawk](https://tasvideos.org/BizHawk) emulator.
 
@@ -15,13 +13,13 @@ It consists of two parts:
 1.  **Lua Script (`export_dataset.lua`)**: Runs inside BizHawk to export gameplay frames and controller input.
 2.  **Python Script (`convert_dataset.py`)**: Converts the exported data into a Parquet file compatible with NitroGen training and pre-processes images.
 
-## Prerequisites
+## 📋 Prerequisites
 
 - **BizHawk Emulator** (Version 2.9+ recommended)
 - **Python 3.8+**
 - **Git** (optional, for cloning)
 
-## Installation
+## 📦 Installation
 
 1.  Clone this repository or download the files.
 2.  Install Python dependencies:
@@ -30,9 +28,9 @@ It consists of two parts:
 pip install -r requirements.txt
 ```
 
-## Usage
+## 🚀 Usage
 
-### Phase 1: Exporting from BizHawk
+### Phase 1: 🎞️ Exporting from BizHawk
 
 1.  Open **BizHawk**.
 2.  Load your ROM (NES or SNES recommended).
@@ -48,7 +46,7 @@ pip install -r requirements.txt
 > *   `actions.csv`: Raw CSV file with input data.
 > *   `dataset_config.json`: Configuration file containing the detected logic (e.g., resize mode based on console).
 
-### Phase 2: Converting and Processing
+### Phase 2: 🖼️ Converting and Processing
 
 Once the Lua export is complete, use the Python script to package the data and process the images.
 
@@ -73,7 +71,7 @@ python convert_dataset.py --skip-images
     *   `processed_frames/`: Images resized/cropped/padded to 256x256 (ready for training).
     *   `actions_raw.parquet`: The dataset file matching the processed frames.
 
-### Functionality via Docker
+### 🐳 Functionality via Docker
 
 You can also run the converter using Docker, which handles all dependencies (including OpenCV) for you.
 
@@ -91,7 +89,7 @@ You can also run the converter using Docker, which handles all dependencies (inc
     ```
 
 
-## Image Processing Logic
+## 🧩 Image Processing Logic
 
 The scripts automatically detect the best resize mode based on the console:
 
@@ -100,11 +98,11 @@ The scripts automatically detect the best resize mode based on the console:
 
 This configuration is saved in `dataset_config.json` by the Lua script and applied by the Python script.
 
-## Testing
+## 🧪 Testing
 
 This project includes tests for both the Python and Lua components.
 
-### Python Tests
+### 🐍 Python Tests
 The Python tests cover image preprocessing and dataset conversion logic.
 
 1.  Calculated dependencies are required (installed via `requirements.txt`), plus `pytest`.
@@ -116,7 +114,7 @@ The Python tests cover image preprocessing and dataset conversion logic.
     pytest tests/
     ```
 
-### Lua Tests
+### 🌙 Lua Tests
 The Lua tests validation the input mapping logic and ensure the script structure is correct.
 
 1.  Requires a standard Lua 5.4 interpreter.
@@ -125,6 +123,6 @@ The Lua tests validation the input mapping logic and ensure the script structure
     lua tests/test_export_dataset.lua
     ```
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
