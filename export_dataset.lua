@@ -97,8 +97,9 @@ end
 
 -- 4. Input Mapping Logic
 ---Get current frame input and format it for NitroGen CSV
+---@param system_id string
 ---@return string
-local function get_nitrogen_input()
+local function get_nitrogen_input(system_id)
     local pad = joypad.get(1)
     
     local south, east, west, north = 0, 0, 0, 0
@@ -106,7 +107,7 @@ local function get_nitrogen_input()
     local start, back = 0, 0
     local up, down, left, right = 0, 0, 0, 0
     
-    if CONSOLE_TYPE == "SNES" then
+    if system_id == "SNES" then
         -- SNES Layout:
         -- B (South), A (East), Y (West), X (North)
         south = bool_to_int(pad["B"])
@@ -125,7 +126,7 @@ local function get_nitrogen_input()
         left  = bool_to_int(pad["Left"])
         right = bool_to_int(pad["Right"])
         
-    elseif CONSOLE_TYPE == "NES" then
+    elseif system_id == "NES" then
         -- NES Layout:
         -- NES B -> Assigned to South (primary action button typically on bottom/left face)
         -- NES A -> Assigned to East (secondary action, usually jump/confirm on right)
@@ -185,7 +186,7 @@ if not TEST_MODE then
         client.screenshot(frames_full_path .. string.format("frame_%06d.png", frame))
         
         -- Capture Input
-        local input_data = get_nitrogen_input()
+        local input_data = get_nitrogen_input(CONSOLE_TYPE)
         file:write(frame .. "," .. input_data .. "\n")
         
         -- Advance Frame

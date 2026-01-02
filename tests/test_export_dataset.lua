@@ -91,8 +91,7 @@ TestExportDataset = {}
     end
 
     function TestExportDataset:test_snes_mapping()
-        -- Setup SNES
-        emu.getsystemid = function() return "SNES" end
+        -- Setup SNES (mock logic for joypad only)
         joypad.get = function() 
             return {
                 B=true, A=false, Y=true, X=false,
@@ -102,7 +101,7 @@ TestExportDataset = {}
             }
         end
         
-        local result = app.get_nitrogen_input()
+        local result = app.get_nitrogen_input("SNES")
         -- Expected: S,E,W,N, L,R, LT,RT, St,Bk, Up,Dn,Lf,Rt, X,Y
         -- SNES: S=B(1), E=A(0), W=Y(1), N=X(0)
         local expected = "1,0,1,0,1,0,0,0,1,0,1,0,0,1,0.0,0.0"
@@ -111,7 +110,6 @@ TestExportDataset = {}
 
     function TestExportDataset:test_nes_mapping()
         -- Setup NES
-        emu.getsystemid = function() return "NES" end
         joypad.get = function() 
             return {
                 B=true, A=false, -- B=South, A=East
@@ -120,14 +118,13 @@ TestExportDataset = {}
             }
         end
         
-        local result = app.get_nitrogen_input()
+        local result = app.get_nitrogen_input("NES")
         -- S=1, E=0, W=0, N=0, St=1, Bk=1, Lf=1
         local expected = "1,0,0,0,0,0,0,0,1,1,0,0,1,0,0.0,0.0"
         lu.assertEquals(result, expected)
     end
 
     function TestExportDataset:test_generic_mapping()
-        emu.getsystemid = function() return "GENESIS" end
         joypad.get = function()
             return {
                 A=true, B=false, C=true, -- S=A, E=B, W=C
@@ -136,7 +133,7 @@ TestExportDataset = {}
             }
         end
         
-        local result = app.get_nitrogen_input()
+        local result = app.get_nitrogen_input("GENESIS")
         -- S=1, E=0, W=1, St=1, Up=1
         local expected = "1,0,1,0,0,0,0,0,1,0,1,0,0,0,0.0,0.0"
         lu.assertEquals(result, expected)
