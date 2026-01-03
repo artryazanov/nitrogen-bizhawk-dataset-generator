@@ -4,14 +4,18 @@ local lu = require('tests.luaunit')
 -- --- MOCKS ---
 -- Mock BizHawk globals: emu, joypad, client, movie, console, os (partially)
 emu = {
-    getsystemid = function() return "SNES" end -- Default for loading
+    getsystemid = function() return "SNES" end, -- Default for loading
+    framecount = function() return 123 end -- Mock framecount
 }
 joypad = {}
 client = {}
-movie = {}
+movie = {
+    getinput = function(frame) return {} end
+}
 console = {}
 _G.joypad = joypad
 _G.emu = emu
+_G.movie = movie
 
 console.log = function(...) end -- silence logs
 
@@ -91,13 +95,13 @@ TestExportDataset = {}
     end
 
     function TestExportDataset:test_snes_mapping()
-        -- Setup SNES (mock logic for joypad only)
-        joypad.get = function() 
+        -- Setup SNES (mock logic for movie input)
+        movie.getinput = function() 
             return {
-                B=true, A=false, Y=true, X=false,
-                L=true, R=false,
-                Start=true, Select=false,
-                Up=true, Down=false, Left=false, Right=true
+                ["P1 B"]=true, ["P1 A"]=false, ["P1 Y"]=true, ["P1 X"]=false,
+                ["P1 L"]=true, ["P1 R"]=false,
+                ["P1 Start"]=true, ["P1 Select"]=false,
+                ["P1 Up"]=true, ["P1 Down"]=false, ["P1 Left"]=false, ["P1 Right"]=true
             }
         end
         
@@ -110,11 +114,11 @@ TestExportDataset = {}
 
     function TestExportDataset:test_nes_mapping()
         -- Setup NES
-        joypad.get = function() 
+        movie.getinput = function() 
             return {
-                B=true, A=false, -- B=South, A=East
-                Start=true, Select=true,
-                Up=false, Down=false, Left=true, Right=false
+                ["P1 B"]=true, ["P1 A"]=false, -- B=South, A=East
+                ["P1 Start"]=true, ["P1 Select"]=true,
+                ["P1 Up"]=false, ["P1 Down"]=false, ["P1 Left"]=true, ["P1 Right"]=false
             }
         end
         
@@ -125,11 +129,11 @@ TestExportDataset = {}
     end
 
     function TestExportDataset:test_generic_mapping()
-        joypad.get = function()
+        movie.getinput = function()
             return {
-                A=true, B=false, C=true, -- S=A, E=B, W=C
-                Start=true, Mode=false,
-                Up=true
+                ["P1 A"]=true, ["P1 B"]=false, ["P1 C"]=true, -- S=A, E=B, W=C
+                ["P1 Start"]=true, ["P1 Mode"]=false,
+                ["P1 Up"]=true
             }
         end
         

@@ -100,70 +100,64 @@ end
 ---@param system_id string
 ---@return string
 local function get_nitrogen_input(system_id)
-    local pad = joypad.get(1)
+    -- CHANGE 1: Read input from the movie for the current frame, not from the gamepad
+    local pad = movie.getinput(emu.framecount())
     
     local south, east, west, north = 0, 0, 0, 0
     local l_sh, r_sh, l_tr, r_tr = 0, 0, 0, 0
     local start, back = 0, 0
     local up, down, left, right = 0, 0, 0, 0
     
+    -- CHANGE 2: Add "P1 " prefix to all buttons
+    
     if system_id == "SNES" then
         -- SNES Layout:
-        -- B (South), A (East), Y (West), X (North)
-        south = bool_to_int(pad["B"])
-        east  = bool_to_int(pad["A"])
-        west  = bool_to_int(pad["Y"])
-        north = bool_to_int(pad["X"])
+        south = bool_to_int(pad["P1 B"])
+        east  = bool_to_int(pad["P1 A"])
+        west  = bool_to_int(pad["P1 Y"])
+        north = bool_to_int(pad["P1 X"])
         
-        l_sh  = bool_to_int(pad["L"])
-        r_sh  = bool_to_int(pad["R"])
+        l_sh  = bool_to_int(pad["P1 L"])
+        r_sh  = bool_to_int(pad["P1 R"])
         
-        start = bool_to_int(pad["Start"])
-        back  = bool_to_int(pad["Select"])
+        start = bool_to_int(pad["P1 Start"])
+        back  = bool_to_int(pad["P1 Select"])
         
-        up    = bool_to_int(pad["Up"])
-        down  = bool_to_int(pad["Down"])
-        left  = bool_to_int(pad["Left"])
-        right = bool_to_int(pad["Right"])
+        up    = bool_to_int(pad["P1 Up"])
+        down  = bool_to_int(pad["P1 Down"])
+        left  = bool_to_int(pad["P1 Left"])
+        right = bool_to_int(pad["P1 Right"])
         
     elseif system_id == "NES" then
         -- NES Layout:
-        -- NES B -> Assigned to South (primary action button typically on bottom/left face)
-        -- NES A -> Assigned to East (secondary action, usually jump/confirm on right)
-        -- NOTE: This mapping is subjective. NitroGen expects specific semantics.
-        -- Usually: South=Jump/Main, East=Attack/Run.
-        -- On NES Controller: B is Left, A is Right. 
-        -- Common emulation mapping: B -> X(West) or Square, A -> Circle(East) or Cross(South).
-        -- We will follow the provided logic: B->South, A->East
-        south = bool_to_int(pad["B"]) 
-        east  = bool_to_int(pad["A"]) 
+        -- B -> South, A -> East
+        south = bool_to_int(pad["P1 B"]) 
+        east  = bool_to_int(pad["P1 A"]) 
         
-        start = bool_to_int(pad["Start"])
-        back  = bool_to_int(pad["Select"])
+        start = bool_to_int(pad["P1 Start"])
+        back  = bool_to_int(pad["P1 Select"])
         
-        up    = bool_to_int(pad["Up"])
-        down  = bool_to_int(pad["Down"])
-        left  = bool_to_int(pad["Left"])
-        right = bool_to_int(pad["Right"])
+        up    = bool_to_int(pad["P1 Up"])
+        down  = bool_to_int(pad["P1 Down"])
+        left  = bool_to_int(pad["P1 Left"])
+        right = bool_to_int(pad["P1 Right"])
         
     else
         -- GENERIC / FALLBACK
-        -- Try to map common names 
-        south = bool_to_int(pad["A"]) -- Often primary
-        east  = bool_to_int(pad["B"])
-        west  = bool_to_int(pad["C"]) -- Mapped to C button for Genesis
+        south = bool_to_int(pad["P1 A"]) 
+        east  = bool_to_int(pad["P1 B"])
+        west  = bool_to_int(pad["P1 C"]) 
         
-        start = bool_to_int(pad["Start"] or pad["S"])
-        back  = bool_to_int(pad["Select"] or pad["Mode"])
+        start = bool_to_int(pad["P1 Start"] or pad["P1 S"])
+        back  = bool_to_int(pad["P1 Select"] or pad["P1 Mode"])
         
-        up    = bool_to_int(pad["Up"])
-        down  = bool_to_int(pad["Down"])
-        left  = bool_to_int(pad["Left"])
-        right = bool_to_int(pad["Right"])
+        up    = bool_to_int(pad["P1 Up"])
+        down  = bool_to_int(pad["P1 Down"])
+        left  = bool_to_int(pad["P1 Left"])
+        right = bool_to_int(pad["P1 Right"])
     end
 
-    -- Stick X/Y are 0.0 for these retro consoles.
-    -- NitroGen format expects specific column order.
+    -- Stick X/Y logic remains 0.0 for NES/SNES
     return string.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,0.0,0.0",
         south, east, west, north,
         l_sh, r_sh, l_tr, r_tr,
