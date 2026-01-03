@@ -76,77 +76,69 @@ def preprocess_image(img: np.ndarray, mode: str = "pad") -> Optional[np.ndarray]
 
 def convert_to_nitrogen_format(input_dir: Path, output_file: Path, process_images: bool = True) -> None:
     """
-    Reads actions.csv, processes it to match NitroGen format, and saves as Parquet.
-    Also processes images if configured.
+    Reads actions.csv, processes images, embeds them into the dataset, and saves as Parquet.
     """
     csv_file = input_dir / "actions.csv"
     config_file = input_dir / "dataset_config.json"
+    frames_dir = input_dir / "frames"
     
-    # 1. Load Data
+    # 1. Load CSV Data
     if not csv_file.exists():
         logger.error(f"CSV file not found: {csv_file}")
         sys.exit(1)
         
     logger.info(f"Reading CSV file: {csv_file}")
-    try:
-        df = pd.read_csv(csv_file)
-    except Exception as e:
-        logger.error(f"Failed to read CSV: {e}")
-        sys.exit(1)
+    df = pd.read_csv(csv_file)
 
     # 2. Determine Resize Mode
-    resize_mode = "pad" # Default
+    resize_mode = "pad"
     if config_file.exists():
         try:
             with open(config_file, 'r') as f:
                 config = json.load(f)
                 resize_mode = config.get("resize_mode", "pad")
-                logger.info(f"Loaded config: resize_mode='{resize_mode}' (Console: {config.get('console_type', 'Unknown')})")
+                logger.info(f"Loaded config: resize_mode='{resize_mode}'")
         except Exception as e:
             logger.warning(f"Failed to read config file: {e}. Defaulting to 'pad'.")
-    else:
-        logger.warning("dataset_config.json not found. Defaulting to 'pad'.")
 
-    # 3. Process Images
-    if process_images:
-        frames_dir = input_dir / "frames"
-        processed_dir = input_dir / "processed_frames"
+    # 3. Process Images and Embed into DataFrame
+    if process_images and frames_dir.exists():
+        logger.info(f"Processing images and embedding into Parquet (Mode: {resize_mode})...")
         
-        if frames_dir.exists():
-            logger.info(f"Processing images from {frames_dir} to {processed_dir} (Mode: {resize_mode})...")
-            processed_dir.mkdir(exist_ok=True)
+        image_bytes_list = []
+        total_rows = len(df)
+        
+        # Iterate through each row of the CSV and look for the corresponding frame
+        for index, row in df.iterrows():
+            frame_num = int(row['frame'])
+            img_path = frames_dir / f"frame_{frame_num:06d}.png"
             
-            # Iterate through frames
-            # Assuming frame_XXXXXX.png naming convention from Lua script
-            count = 0
-            total = len(list(frames_dir.glob("*.png")))
-            
-            for img_path in frames_dir.glob("*.png"):
+            img_bytes = None
+            if img_path.exists():
                 try:
-                    # Read
                     img = cv2.imread(str(img_path))
-                    if img is None:
-                        logger.warning(f"Failed to load image: {img_path}")
-                        continue
-                        
-                    # Process
-                    processed_img = preprocess_image(img, mode=resize_mode)
-                    
-                    # Save
-                    out_path = processed_dir / img_path.name
-                    cv2.imwrite(str(out_path), processed_img)
-                    
-                    count += 1
-                    if count % 100 == 0:
-                        print(f"Processed {count}/{total} images...", end='\r')
-                        
+                    if img is not None:
+                        # Preprocess
+                        processed_img = preprocess_image(img, mode=resize_mode)
+                        # Encode to PNG bytes
+                        success, encoded_img = cv2.imencode('.png', processed_img)
+                        if success:
+                            img_bytes = encoded_img.tobytes()
                 except Exception as e:
-                    logger.error(f"Error processing {img_path}: {e}")
-            print(f"Processed {count}/{total} images. Done.")
-        else:
-            logger.warning(f"Frames directory not found: {frames_dir}. Skipping image processing.")
+                    logger.warning(f"Error processing frame {frame_num}: {e}")
+            
+            image_bytes_list.append(img_bytes)
+            
+            if index % 100 == 0:
+                print(f"Processed {index}/{total_rows} frames...", end='\r')
+        
+        # Add column with image bytes
+        df['image'] = image_bytes_list
+        print(f"Processed {total_rows}/{total_rows} frames. Done.")
+    else:
+        logger.warning("Skipping image processing or frames directory not found.")
 
-    # 4. Process CSV Data (NitroGen Format)
+    # 4. Process Actions (NitroGen Format)
     bool_cols = [
         'south', 'east', 'west', 'north', 
         'left_shoulder', 'right_shoulder', 
@@ -156,15 +148,11 @@ def convert_to_nitrogen_format(input_dir: Path, output_file: Path, process_image
     ]
     extra_required_cols = ['left_thumb', 'right_thumb', 'guide']
     
-    for col in bool_cols:
+    for col in bool_cols + extra_required_cols:
         if col not in df.columns:
             df[col] = 0
-    for col in extra_required_cols:
-        if col not in df.columns:
-            df[col] = 0
-
-    full_bool_list = bool_cols + extra_required_cols
-    for col in full_bool_list:
+            
+    for col in bool_cols + extra_required_cols:
         df[col] = df[col].astype(bool)
 
     if 'stick_x' in df.columns and 'stick_y' in df.columns:
@@ -174,12 +162,16 @@ def convert_to_nitrogen_format(input_dir: Path, output_file: Path, process_image
 
     df['j_right'] = [[0.0, 0.0]] * len(df)
 
-    final_columns = full_bool_list + ['j_left', 'j_right']
+    # IMPORTANT: Add 'image' to the list of columns to save
+    final_columns = bool_cols + extra_required_cols + ['j_left', 'j_right']
+    if 'image' in df.columns:
+        final_columns.append('image')
     
     logger.info(f"Saving Parquet to: {output_file}")
+    # Use pyarrow engine for correct binary data saving
     try:
-        df[final_columns].to_parquet(output_file, index=False)
-        logger.info(f"Successfully converted actions data.")
+        df[final_columns].to_parquet(output_file, index=False, engine='pyarrow')
+        logger.info(f"Successfully converted dataset.")
     except Exception as e:
         logger.error(f"Failed to save Parquet file: {e}")
         sys.exit(1)

@@ -56,8 +56,7 @@ Once the Lua export is complete, use the Python script to package the data and p
 ```bash
 # Default usage 
 # Reads from 'nitrogen_dataset/'
-# Saves processed images to 'nitrogen_dataset/processed_frames/'
-# Saves parquet to 'nitrogen_dataset/actions_raw.parquet'
+# Saves parquet to 'nitrogen_dataset/actions_raw.parquet' (images embedded)
 python convert_dataset.py
 
 # Specify custom input directory
@@ -68,8 +67,7 @@ python convert_dataset.py --skip-images
 ```
 
 3.  The output will contain:
-    *   `processed_frames/`: Images resized/cropped/padded to 256x256 (ready for training).
-    *   `actions_raw.parquet`: The dataset file matching the processed frames.
+    *   `actions_raw.parquet`: The single-file dataset containing both actions and embedded images (ready for training).
 
 ### 🐳 Functionality via Docker
 

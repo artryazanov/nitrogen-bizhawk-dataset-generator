@@ -130,9 +130,19 @@ def test_convert_images_execution(temp_dataset_dir):
     with patch('builtins.print'): # Suppress progress prints
         convert_to_nitrogen_format(temp_dataset_dir, output_file, process_images=True)
     
+    # Processed frames directory should NOT exist
     processed_dir = temp_dataset_dir / "processed_frames"
-    assert processed_dir.exists()
-    assert (processed_dir / "frame_000001.png").exists()
+    assert not processed_dir.exists()
     
-    saved_img = cv2.imread(str(processed_dir / "frame_000001.png"))
-    assert saved_img.shape == (256, 256, 3)
+    # Check parquet file
+    assert output_file.exists()
+    df = pd.read_parquet(output_file)
+    
+    assert 'image' in df.columns
+    # Check that image data is present and has correct type
+    img_bytes = df.iloc[0]['image']
+    assert isinstance(img_bytes, bytes)
+    
+    # Decode image to check it was processed correctly
+    decoded_img = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+    assert decoded_img.shape == (256, 256, 3)
