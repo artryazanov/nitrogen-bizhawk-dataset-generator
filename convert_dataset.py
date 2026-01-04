@@ -12,6 +12,7 @@ try:
     import fastparquet
     import cv2
     import numpy as np
+    from datasets import Dataset, Image, Features, Value, Sequence
 except ImportError as e:
     print(f"Error: Missing dependency. {e}")
     print("Please run: pip install -r requirements.txt")
@@ -168,10 +169,20 @@ def convert_to_nitrogen_format(input_dir: Path, output_file: Path, process_image
         final_columns.append('image')
     
     logger.info(f"Saving Parquet to: {output_file}")
-    # Use pyarrow engine for correct binary data saving
+    
+    # 1. Convert Pandas DataFrame to HF Dataset
+    ds = Dataset.from_pandas(df[final_columns])
+    
+    # 2. Cast 'image' column to Image type
+    # Hugging Face will automatically understand that it contains PNG bytes
+    if 'image' in df.columns:
+        ds = ds.cast_column("image", Image())
+
+    # 3. Save using built-in datasets method
+    # This creates a Parquet file with the correct schema (Arrow Schema)
     try:
-        df[final_columns].to_parquet(output_file, index=False, engine='pyarrow')
-        logger.info(f"Successfully converted dataset.")
+        ds.to_parquet(str(output_file))
+        logger.info(f"Successfully converted dataset with HF Image types.")
     except Exception as e:
         logger.error(f"Failed to save Parquet file: {e}")
         sys.exit(1)

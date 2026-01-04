@@ -140,7 +140,14 @@ def test_convert_images_execution(temp_dataset_dir):
     
     assert 'image' in df.columns
     # Check that image data is present and has correct type
-    img_bytes = df.iloc[0]['image']
+    img_entry = df.iloc[0]['image']
+    
+    # Hugging Face datasets Image type is typically saved as a struct {'bytes': ..., 'path': ...}
+    if isinstance(img_entry, dict):
+        img_bytes = img_entry.get('bytes')
+    else:
+        img_bytes = img_entry
+        
     assert isinstance(img_bytes, bytes)
     
     # Decode image to check it was processed correctly

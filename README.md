@@ -11,7 +11,7 @@ This project provides tools to create training datasets for [NitroGen](https://h
 
 It consists of two parts:
 1.  **Lua Script (`export_dataset.lua`)**: Runs inside BizHawk to export gameplay frames and controller input.
-2.  **Python Script (`convert_dataset.py`)**: Converts the exported data into a Parquet file compatible with NitroGen training and pre-processes images.
+2.  **Python Script (`convert_dataset.py`)**: Converts the exported data into a Parquet file compatible with NitroGen training and pre-processes images (saves as Hugging Face `datasets` Image type).
 
 ## 📋 Prerequisites
 
@@ -67,7 +67,7 @@ python convert_dataset.py --skip-images
 ```
 
 3.  The output will contain:
-    *   `train.parquet`: The single-file dataset containing both actions and embedded images (ready for training).
+    *   `train.parquet`: The single-file dataset containing both actions and embedded images (Hugging Face `datasets` compatible format).
 
 ### 🐳 Functionality via Docker
 
